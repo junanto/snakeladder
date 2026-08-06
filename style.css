@@ -98,6 +98,23 @@ h1 {
 .cell-special-start { background: rgba(0, 255, 204, 0.15) !important; color: #00ffcc; }
 .cell-special-finish { background: rgba(255, 215, 0, 0.15) !important; color: #ffd700; }
 
+/* Indikator Visual Ranjau di Petak Papan */
+.mine-indicator {
+    position: absolute;
+    bottom: 3px;
+    right: 4px;
+    z-index: 5;
+    animation: pulse-mine 1.2s infinite ease-in-out;
+    pointer-events: none;
+    line-height: 1;
+}
+
+@keyframes pulse-mine {
+    0% { transform: scale(0.9); opacity: 0.8; }
+    50% { transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 4px #ff0055); }
+    100% { transform: scale(0.9); opacity: 0.8; }
+}
+
 #players-container {
     position: absolute;
     top: 10px;
@@ -216,6 +233,12 @@ h1 {
 .powerup-btn:hover:not(:disabled) {
     border-color: #00ffcc;
     background: rgba(0, 255, 204, 0.1);
+}
+
+/* Style Khusus Tombol Power-Up Ranjau */
+#pu-mine:hover:not(:disabled) {
+    border-color: #ff0055;
+    background: rgba(255, 0, 85, 0.15);
 }
 
 .powerup-btn:disabled {
