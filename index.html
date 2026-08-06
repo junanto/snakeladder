@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ular & Tangga: Komputer Quest + Quiz Timer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>Ular & Tangga</h1>
+    <div class="subtitle">&gt; SYSTEM.QUEST: EDUSPACE_v3.2 (30s TIMER)</div>
+
+    <div class="game-container">
+        <div class="board-wrapper">
+            <svg id="game-svg">
+                <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#00ffcc"/>
+                    </marker>
+                    <marker id="virus-head" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff0055"/>
+                    </marker>
+                </defs>
+            </svg>
+            <div id="board"></div>
+            <div id="players-container"></div>
+        </div>
+
+        <div class="controls-panel">
+            <div id="turn-card" class="turn-card">
+                <div class="turn-title">Giliran Saat Ini</div>
+                <div id="turn-display" class="turn-value">User_01 (P1)</div>
+            </div>
+
+            <div class="powerup-section">
+                <div class="section-title">⚡ Toko Power-Up</div>
+                <div class="powerup-grid">
+                    <button id="pu-5050" class="powerup-btn" onclick="buyPowerUp('5050')">
+                        <span class="powerup-icon">🎯</span>
+                        <span>50 : 50</span>
+                        <span class="powerup-cost">100 PTS</span>
+                    </button>
+                    <button id="pu-shield" class="powerup-btn" onclick="buyPowerUp('shield')">
+                        <span class="powerup-icon">🛡️</span>
+                        <span>Perisai</span>
+                        <span class="powerup-cost">150 PTS</span>
+                    </button>
+                    <button id="pu-boost" class="powerup-btn" onclick="buyPowerUp('boost')">
+                        <span class="powerup-icon">🚀</span>
+                        <span>Dadu +2</span>
+                        <span class="powerup-cost">120 PTS</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="dice-section">
+                <div id="dice-display" class="dice-box">?</div>
+                <button id="roll-btn" class="btn" style="width: 60%;" onclick="triggerQuiz()">Jawab Kuis</button>
+            </div>
+
+            <div class="section-title" style="margin-bottom: -8px;">📊 Skor & Status Pemain</div>
+            <div class="stats-section" id="stats-box"></div>
+
+            <button class="btn" style="background: transparent; color: #ff0055; border: 1px solid #ff0055;" onclick="openPlayerSetup()">Reset / Atur Ulang</button>
+        </div>
+    </div>
+
+    <!-- Modal Configuration Player Count -->
+    <div id="setup-modal" class="modal-overlay active">
+        <div class="modal-card">
+            <div class="modal-title">&gt; KONFIGURASI_PEMAIN</div>
+            <p style="color: #88a0c0; font-size: 0.85rem;">Pilih jumlah pemain (2-8 pemain) untuk memulai permainan:</p>
+            <div class="player-selector-grid">
+                <button class="player-opt-btn" onclick="selectPlayerCount(2)">2</button>
+                <button class="player-opt-btn selected" onclick="selectPlayerCount(3)">3</button>
+                <button class="player-opt-btn" onclick="selectPlayerCount(4)">4</button>
+                <button class="player-opt-btn" onclick="selectPlayerCount(5)">5</button>
+                <button class="player-opt-btn" onclick="selectPlayerCount(6)">6</button>
+                <button class="player-opt-btn" onclick="selectPlayerCount(7)">7</button>
+                <button class="player-opt-btn" onclick="selectPlayerCount(8)">8</button>
+            </div>
+            <button class="btn" onclick="startGame()">Mulai Permainan</button>
+        </div>
+    </div>
+
+    <!-- Modal Kuis dengan Timer -->
+    <div id="quiz-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">&gt; VERIFIKASI_AKSES</div>
+                <div class="timer-box">⏳ <span id="timer-text">30</span>s</div>
+            </div>
+            <div class="timer-progress-bar">
+                <div id="timer-progress" class="timer-progress-fill"></div>
+            </div>
+            <div id="quiz-question" class="quiz-question">...</div>
+            <div id="quiz-options" class="quiz-options"></div>
+            <div id="quiz-feedback" class="quiz-feedback"></div>
+        </div>
+    </div>
+
+    <!-- Load Bank Soal terlebih dahulu -->
+    <script src="question.js"></script>
+    <!-- Load Logika utama Game -->
+    <script src="game.js"></script>
+</body>
+</html>
