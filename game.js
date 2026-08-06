@@ -11,12 +11,14 @@ let playerPositions = [];
 let playerScores = [];
 let playerShields = [];
 let playerBoosts = [];
+let playerSkipped = []; // Menandai jika pemain kehilangan giliran karena ranjau
+let mines = new Array(TOTAL_CELLS + 1).fill(false); // Menyimpan lokasi ranjau di papan
+
 let currentPlayer = 0;
 let isRolling = false;
 
 let availableQuestions = [];
 let currentQuestionIndex = 0;
-let active5050 = false;
 
 // --- VARIABEL TIMER ---
 let quizTimer = null;
@@ -45,10 +47,14 @@ function startGame() {
     playerScores = new Array(numPlayers).fill(0);
     playerShields = new Array(numPlayers).fill(false);
     playerBoosts = new Array(numPlayers).fill(false);
+    playerSkipped = new Array(numPlayers).fill(false);
+    mines = new Array(TOTAL_CELLS + 1).fill(false);
+    
     currentPlayer = 0;
     isRolling = false;
 
     resetQuestionDeck();
+    createBoard(); // Render ulang papan agar indikator ranjau ter-reset
 
     const container = document.getElementById('players-container');
     container.innerHTML = '';
@@ -78,6 +84,7 @@ function updateStatsDisplay() {
         let statusIcons = '';
         if (playerShields[i]) statusIcons += ' 🛡️';
         if (playerBoosts[i]) statusIcons += ' 🚀';
+        if (playerSkipped[i]) statusIcons += ' 🛑';
 
         row.innerHTML = `
             <span style="color:${playerColors[i]}; font-weight:bold;">P${i + 1} (User_0${i + 1})${statusIcons}</span>
@@ -87,16 +94,42 @@ function updateStatsDisplay() {
     }
 
     const currentPts = playerScores[currentPlayer];
-    document.getElementById('pu-5050').disabled = currentPts < 100;
+    // Menyesuaikan tombol power-up dari 5050 ke pu-mine
+    const mineBtn = document.getElementById('pu-mine');
+    if (mineBtn) {
+        mineBtn.disabled = currentPts < 120;
+    }
+    
     document.getElementById('pu-shield').disabled = currentPts < 150 || playerShields[currentPlayer];
     document.getElementById('pu-boost').disabled = currentPts < 120 || playerBoosts[currentPlayer];
 }
 
 function buyPowerUp(type) {
-    if (type === '5050' && playerScores[currentPlayer] >= 100) {
-        playerScores[currentPlayer] -= 100;
-        active5050 = true;
-        alert(`🎯 Power-Up 50:50 diaktifkan!`);
+    if (type === 'mine' && playerScores[currentPlayer] >= 120) {
+        const currentCell = playerPositions[currentPlayer];
+        
+        if (mines[currentCell]) {
+            alert(`⚠️ Kotak ${currentCell} sudah ada ranjaunya!`);
+            return;
+        }
+
+        playerScores[currentPlayer] -= 120;
+        mines[currentCell] = true;
+        
+        // Tampilkan visual ranjau di papan
+        const cellEl = document.getElementById(`cell-${currentCell}`);
+        if (cellEl) {
+            let mineIndicator = cellEl.querySelector('.mine-indicator');
+            if (!mineIndicator) {
+                mineIndicator = document.createElement('span');
+                mineIndicator.className = 'mine-indicator';
+                mineIndicator.innerText = '💣';
+                mineIndicator.style.fontSize = '14px';
+                cellEl.appendChild(mineIndicator);
+            }
+        }
+
+        alert(`💣 Ranjau dipasang di Kotak ${currentCell}! Pemain lain yang menginjak kotak ini akan kehilangan 1 giliran.`);
     } else if (type === 'shield' && playerScores[currentPlayer] >= 150) {
         playerScores[currentPlayer] -= 150;
         playerShields[currentPlayer] = true;
@@ -184,24 +217,10 @@ function triggerQuiz() {
     optionsEl.innerHTML = '';
     feedbackEl.innerText = '';
 
-    let wrongOptionsIndices = [];
-    qData.options.forEach((_, idx) => { if (idx !== qData.answer) wrongOptionsIndices.push(idx); });
-    
-    let hiddenIndices = [];
-    if (active5050) {
-        wrongOptionsIndices.sort(() => Math.random() - 0.5);
-        hiddenIndices = wrongOptionsIndices.slice(0, 2);
-    }
-
     qData.options.forEach((optText, idx) => {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.innerText = `${String.fromCharCode(65 + idx)}. ${optText}`;
-        
-        if (hiddenIndices.includes(idx)) {
-            btn.style.visibility = 'hidden';
-        }
-
         btn.onclick = () => handleAnswer(idx);
         optionsEl.appendChild(btn);
     });
@@ -219,7 +238,6 @@ function handleAnswer(selectedIndex) {
     const modal = document.getElementById('quiz-modal');
 
     optionsBtns.forEach(btn => btn.disabled = true);
-    active5050 = false;
 
     if (selectedIndex === qData.answer) {
         optionsBtns[selectedIndex].classList.add('correct');
@@ -286,6 +304,21 @@ function processTurn(diceValue) {
     updatePawnPositions();
 
     setTimeout(() => {
+        // Pengecekan Ranjau
+        if (mines[nextPos]) {
+            mines[nextPos] = false; // Ranjau meledak dan hilang
+            playerSkipped[currentPlayer] = true; // Tandai pemain kehilangan 1 giliran berikutnya
+            
+            // Hapus ikon ranjau dari papan
+            const cellEl = document.getElementById(`cell-${nextPos}`);
+            if (cellEl) {
+                const mineIndicator = cellEl.querySelector('.mine-indicator');
+                if (mineIndicator) mineIndicator.remove();
+            }
+
+            alert(`💥 BOOM! P${currentPlayer + 1} menginjak ranjau di Kotak ${nextPos}! Giliran berikutnya akan dilewati.`);
+        }
+
         if (ladders[nextPos]) {
             playerPositions[currentPlayer] = ladders[nextPos];
             updatePawnPositions();
@@ -311,7 +344,18 @@ function processTurn(diceValue) {
 }
 
 function finishTurn() {
+    // Tentukan pemain selanjutnya
     currentPlayer = (currentPlayer + 1) % numPlayers;
+
+    // Jika pemain berikutnya kena efek ranjau (di-skip)
+    if (playerSkipped[currentPlayer]) {
+        playerSkipped[currentPlayer] = false; // Reset status skip
+        alert(`🛑 P${currentPlayer + 1} kehilangan gilirannya karena ranjau!`);
+        
+        // Pindah langsung ke pemain berikutnya lagi
+        currentPlayer = (currentPlayer + 1) % numPlayers;
+    }
+
     updateTurnDisplay();
     updateStatsDisplay();
     isRolling = false;
@@ -336,6 +380,7 @@ function createBoard() {
             const cellNum = row * GRID_SIZE + actualCol + 1;
 
             const cell = document.createElement('div');
+            cell.id = `cell-${cellNum}`;
             cell.className = `cell ${(row + col) % 2 === 0 ? 'cell-even' : 'cell-odd'}`;
             
             if (cellNum === 1) cell.classList.add('cell-special-start');
