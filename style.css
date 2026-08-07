@@ -71,8 +71,9 @@ h1 {
     width: 491px;
     height: 491px;
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: repeat(7, 1fr);
+    /* DIBUAT 8 KOLOM DAN 8 BARIS (64 KOTAK) */
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
     background: #0a0f1d;
     border-radius: 6px;
     position: relative;
@@ -84,9 +85,9 @@ h1 {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 4px;
+    padding: 2px;
     font-family: monospace;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: bold;
     color: #557799;
 }
@@ -94,15 +95,14 @@ h1 {
 .cell-even { background: rgba(16, 26, 48, 0.4); }
 .cell-odd { background: rgba(8, 14, 28, 0.6); }
 
-.cell-num { position: absolute; top: 4px; left: 5px; z-index: 2; }
+.cell-num { position: absolute; top: 2px; left: 3px; z-index: 2; }
 .cell-special-start { background: rgba(0, 255, 204, 0.15) !important; color: #00ffcc; }
 .cell-special-finish { background: rgba(255, 215, 0, 0.15) !important; color: #ffd700; }
 
-/* Indikator Visual Ranjau di Petak Papan */
 .mine-indicator {
     position: absolute;
-    bottom: 3px;
-    right: 4px;
+    bottom: 2px;
+    right: 2px;
     z-index: 5;
     animation: pulse-mine 1.2s infinite ease-in-out;
     pointer-events: none;
@@ -127,13 +127,13 @@ h1 {
 
 .player-pawn {
     position: absolute;
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: bold;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     transform: translate(-50%, -50%);
@@ -141,7 +141,6 @@ h1 {
     color: #000;
 }
 
-/* Controls Panel */
 .controls-panel {
     width: 320px;
     background: #0d1527;
@@ -235,7 +234,6 @@ h1 {
     background: rgba(0, 255, 204, 0.1);
 }
 
-/* Style Khusus Tombol Power-Up Ranjau */
 #pu-mine:hover:not(:disabled) {
     border-color: #ff0055;
     background: rgba(255, 0, 85, 0.15);
@@ -253,7 +251,7 @@ h1 {
     background: #080e1a;
     border-radius: 8px;
     padding: 8px;
-    max-height: 110px;
+    max-height: 120px;
     overflow-y: auto;
     font-size: 0.75rem;
 }
@@ -281,7 +279,6 @@ h1 {
 
 .btn:disabled { background: #2a3b5c; color: #557799; cursor: not-allowed; }
 
-/* Modals */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh;
@@ -312,7 +309,6 @@ h1 {
 
 .modal-title { color: #00ffcc; font-size: 1rem; font-weight: bold; font-family: monospace; }
 
-/* CSS Timer */
 .timer-box {
     font-family: monospace;
     font-weight: bold;
