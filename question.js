@@ -14,7 +14,7 @@ const quizBank = [
     { q: "jenis algoritma yang memungkinkan sebuah fungsi memanggil dirinya sendiri....", options: ["rekursi", "greedy", "dynamic programming", "problem solving"], answer: 0 },
     { q: "yang menunjukkan nilai awal dari barisan rekursi disebut....", options: ["basis", "rekurens", "testing", "input"], answer: 0 },
     { q: "uang senilai A=8000 dapat ditukar dengan banyak cara. Sedang koin yang tersedia adalah koin 1000, 5000, 3000. Tentukan jumlah paling sedikit untuk dapat ditukarkan sejumlah A!", options: ["1", "2", "3", "4"], answer: 1 },
-    { q: "breedy secara harfiah berarti....", options: ["cerdas", "serakah", "cepat", "sederhana"], answer: 1 },
+    { q: "greedy secara harfiah berarti....", options: ["cerdas", "serakah", "cepat", "sederhana"], answer: 1 },
     { q: "dalam masalah coin change, pendekatan greedy akan memilih koin dengan nilai apa?", options: ["koin dengan nilai terkecil", "koin dengan nilai rata-rata", "koin dengan nilai sama", "koin dengan nilai terbesar"], answer: 3 },
     { q: "salah satu kekurangan dari algoritma greedy adalah....", options: ["kesulitan dalam implementasi", "selalu memberikan hasil salah", "tidak selalu memberikan solusi optimal", "membutuhkan banyak memori"], answer: 2 },
     { q: "take what you can get now merupakan prinsip dari....", options: ["rekursi", "greedy", "dynamic programming", "divide and conquer"], answer: 1 },
