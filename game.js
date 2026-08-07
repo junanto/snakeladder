@@ -1,13 +1,24 @@
-// SESUAIKAN GRID KE 8 x 8 = 64
+// GRID 8 x 8 = 64 KOTAK
 const GRID_SIZE = 8;
 const TOTAL_CELLS = 64;
 const QUESTION_TIMEOUT = 30; // Detik per soal
 
 const playerColors = ['#00ffcc', '#ff0055', '#ffd700', '#0099ff', '#ff6600', '#a600ff', '#00ff66', '#ff3399'];
 
-// Tangga & Ular disesuaikan dengan rentang 1 - 64
-const ladders = { 4: 18, 12: 26, 22: 37, 30: 45, 41: 59, 48: 62 };
-const snakes = { 20: 7, 32: 15, 43: 24, 54: 35, 60: 42 };
+// TEPAT 4 TANGGA & 4 ULAR (DIADAPTASI UNTUK PAPAN 64 PETAK)
+const ladders = { 
+    5: 22,   // Tangga 1
+    14: 31,  // Tangga 2
+    27: 46,  // Tangga 3
+    40: 59   // Tangga 4
+};
+
+const snakes = { 
+    24: 8,   // Ular 1
+    38: 15,  // Ular 2
+    51: 29,  // Ular 3
+    62: 44   // Ular 4
+};
 
 let numPlayers = 3;
 let playerPositions = [];
@@ -15,8 +26,8 @@ let playerScores = [];
 let playerShields = [];
 let playerBoosts = [];
 let playerSkipped = []; 
-let playerFinished = []; // Menandai jika pemain sudah menyentuh FINISH
-let rankings = [];       // Menyimpan urutan urutan selesai [P2, P1, ...]
+let playerFinished = []; // Menandai jika pemain sudah FINISH
+let rankings = [];       // Urutan peringkat pemenang
 let mines = new Array(TOTAL_CELLS + 1).fill(false);
 
 let currentPlayer = 0;
@@ -345,7 +356,7 @@ function processTurn(diceValue) {
             }
         }
 
-        // KONDISI SELESAI FINISH
+        // KONDISI FINISH
         if (playerPositions[currentPlayer] === TOTAL_CELLS) {
             playerFinished[currentPlayer] = true;
             rankings.push(currentPlayer);
@@ -361,7 +372,6 @@ function finishTurn() {
 
     // Jika tersisa 1 pemain aktif atau semua selesai, permainan tamat
     if (activePlayers <= 1 && numPlayers > 1) {
-        // Otomatis tandai pemain terakhir jika belum selesai
         for (let i = 0; i < numPlayers; i++) {
             if (!playerFinished[i]) {
                 playerFinished[i] = true;
@@ -393,7 +403,6 @@ function finishTurn() {
         playerSkipped[currentPlayer] = false;
         alert(`🛑 P${currentPlayer + 1} kehilangan gilirannya karena ranjau!`);
         
-        // Pindah ke pemain aktif lainnya
         nextPlayer = (currentPlayer + 1) % numPlayers;
         while (playerFinished[nextPlayer]) {
             nextPlayer = (nextPlayer + 1) % numPlayers;
