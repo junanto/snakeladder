@@ -319,7 +319,9 @@ function processTurn(diceValue) {
     let currentPos = playerPositions[currentPlayer];
     let nextPos = currentPos + diceValue;
 
+    // Jika melebihi 64, langkah tidak valid (harus pas)
     if (nextPos > TOTAL_CELLS) {
+        alert(`🎲 Angka dadu (${diceValue}) melebihi kotak FINISH! Giliran berakhir.`);
         finishTurn();
         return;
     }
@@ -328,7 +330,7 @@ function processTurn(diceValue) {
     updatePawnPositions();
 
     setTimeout(() => {
-        // Pengecekan Ranjau
+        // 1. Pengecekan Ranjau
         if (mines[nextPos]) {
             mines[nextPos] = false;
             playerSkipped[currentPlayer] = true;
@@ -342,9 +344,11 @@ function processTurn(diceValue) {
             alert(`💥 BOOM! P${currentPlayer + 1} menginjak ranjau di Kotak ${nextPos}! Giliran berikutnya akan dilewati.`);
         }
 
+        // 2. Pengecekan Tangga & Ular
         if (ladders[nextPos]) {
             playerPositions[currentPlayer] = ladders[nextPos];
             updatePawnPositions();
+            alert(`🚀 P${currentPlayer + 1} naik tangga ke Kotak ${ladders[nextPos]}!`);
         } 
         else if (snakes[nextPos]) {
             if (playerShields[currentPlayer]) {
@@ -353,25 +357,29 @@ function processTurn(diceValue) {
             } else {
                 playerPositions[currentPlayer] = snakes[nextPos];
                 updatePawnPositions();
+                alert(`🦠 P${currentPlayer + 1} terkena virus/ular dan turun ke Kotak ${snakes[nextPos]}!`);
             }
         }
 
-        // KONDISI FINISH
+        // 3. Pengecekan Kondisi FINISH (Petak 64)
         if (playerPositions[currentPlayer] === TOTAL_CELLS) {
             playerFinished[currentPlayer] = true;
             rankings.push(currentPlayer);
             alert(`🎉 PEMAIN P${currentPlayer + 1} BERHASIL FINISH DI URUTAN KE-${rankings.length}!`);
         }
 
+        // 4. Selesaikan giliran
         finishTurn();
     }, 400);
 }
 
 function finishTurn() {
-    const activePlayers = playerFinished.filter(f => !f).length;
+    // Hitung berapa pemain yang belum finish
+    const activePlayersCount = playerFinished.filter(finished => !finished).length;
 
-    // Jika tersisa 1 pemain aktif atau semua selesai, permainan tamat
-    if (activePlayers <= 1 && numPlayers > 1) {
+    // Permainan selesai jika sisa 1 pemain aktif (atau semua sudah finish)
+    if (activePlayersCount <= 1 && numPlayers > 1) {
+        // Masukkan pemain terakhir yang belum finish ke peringkat akhir
         for (let i = 0; i < numPlayers; i++) {
             if (!playerFinished[i]) {
                 playerFinished[i] = true;
@@ -391,18 +399,20 @@ function finishTurn() {
         return;
     }
 
-    // Cari pemain berikutnya yang belum finish
+    // Jika pemain yang baru saja main belum finish tapi permainan belum beres, atau jika sudah finish,
+    // cari pemain berikutnya yang BELUM FINISH.
     let nextPlayer = (currentPlayer + 1) % numPlayers;
     while (playerFinished[nextPlayer]) {
         nextPlayer = (nextPlayer + 1) % numPlayers;
     }
     currentPlayer = nextPlayer;
 
-    // Pengecekan status skip akibat ranjau
+    // Pengecekan status skip akibat ranjau untuk pemain berikutnya
     if (playerSkipped[currentPlayer]) {
         playerSkipped[currentPlayer] = false;
         alert(`🛑 P${currentPlayer + 1} kehilangan gilirannya karena ranjau!`);
         
+        // Pindah lagi ke pemain aktif berikutnya
         nextPlayer = (currentPlayer + 1) % numPlayers;
         while (playerFinished[nextPlayer]) {
             nextPlayer = (nextPlayer + 1) % numPlayers;
