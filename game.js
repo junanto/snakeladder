@@ -1,18 +1,23 @@
-const GRID_SIZE = 7;
-const TOTAL_CELLS = 49;
+// SESUAIKAN GRID KE 8 x 8 = 64
+const GRID_SIZE = 8;
+const TOTAL_CELLS = 64;
 const QUESTION_TIMEOUT = 30; // Detik per soal
 
 const playerColors = ['#00ffcc', '#ff0055', '#ffd700', '#0099ff', '#ff6600', '#a600ff', '#00ff66', '#ff3399'];
-const ladders = { 4: 17, 12: 26, 21: 37, 30: 44 };
-const snakes = { 19: 6, 29: 11, 39: 23, 47: 32 };
+
+// Tangga & Ular disesuaikan dengan rentang 1 - 64
+const ladders = { 4: 18, 12: 26, 22: 37, 30: 45, 41: 59, 48: 62 };
+const snakes = { 20: 7, 32: 15, 43: 24, 54: 35, 60: 42 };
 
 let numPlayers = 3;
 let playerPositions = [];
 let playerScores = [];
 let playerShields = [];
 let playerBoosts = [];
-let playerSkipped = []; // Menandai jika pemain kehilangan giliran karena ranjau
-let mines = new Array(TOTAL_CELLS + 1).fill(false); // Menyimpan lokasi ranjau di papan
+let playerSkipped = []; 
+let playerFinished = []; // Menandai jika pemain sudah menyentuh FINISH
+let rankings = [];       // Menyimpan urutan urutan selesai [P2, P1, ...]
+let mines = new Array(TOTAL_CELLS + 1).fill(false);
 
 let currentPlayer = 0;
 let isRolling = false;
@@ -48,13 +53,15 @@ function startGame() {
     playerShields = new Array(numPlayers).fill(false);
     playerBoosts = new Array(numPlayers).fill(false);
     playerSkipped = new Array(numPlayers).fill(false);
+    playerFinished = new Array(numPlayers).fill(false);
+    rankings = [];
     mines = new Array(TOTAL_CELLS + 1).fill(false);
     
     currentPlayer = 0;
     isRolling = false;
 
     resetQuestionDeck();
-    createBoard(); // Render ulang papan agar indikator ranjau ter-reset
+    createBoard(); 
 
     const container = document.getElementById('players-container');
     container.innerHTML = '';
@@ -71,6 +78,7 @@ function startGame() {
     updateTurnDisplay();
     updateStatsDisplay();
     updatePawnPositions();
+    drawOverlay();
     document.getElementById('dice-display').innerText = '?';
     document.getElementById('roll-btn').disabled = false;
 }
@@ -82,9 +90,14 @@ function updateStatsDisplay() {
         const row = document.createElement('div');
         row.className = 'stat-row';
         let statusIcons = '';
-        if (playerShields[i]) statusIcons += ' 🛡️';
-        if (playerBoosts[i]) statusIcons += ' 🚀';
-        if (playerSkipped[i]) statusIcons += ' 🛑';
+        if (playerFinished[i]) {
+            const rankIndex = rankings.indexOf(i) + 1;
+            statusIcons += ` 🏆 #${rankIndex}`;
+        } else {
+            if (playerShields[i]) statusIcons += ' 🛡️';
+            if (playerBoosts[i]) statusIcons += ' 🚀';
+            if (playerSkipped[i]) statusIcons += ' 🛑';
+        }
 
         row.innerHTML = `
             <span style="color:${playerColors[i]}; font-weight:bold;">P${i + 1} (User_0${i + 1})${statusIcons}</span>
@@ -94,17 +107,18 @@ function updateStatsDisplay() {
     }
 
     const currentPts = playerScores[currentPlayer];
-    // Menyesuaikan tombol power-up dari 5050 ke pu-mine
     const mineBtn = document.getElementById('pu-mine');
     if (mineBtn) {
-        mineBtn.disabled = currentPts < 120;
+        mineBtn.disabled = currentPts < 120 || playerFinished[currentPlayer];
     }
     
-    document.getElementById('pu-shield').disabled = currentPts < 150 || playerShields[currentPlayer];
-    document.getElementById('pu-boost').disabled = currentPts < 120 || playerBoosts[currentPlayer];
+    document.getElementById('pu-shield').disabled = currentPts < 150 || playerShields[currentPlayer] || playerFinished[currentPlayer];
+    document.getElementById('pu-boost').disabled = currentPts < 120 || playerBoosts[currentPlayer] || playerFinished[currentPlayer];
 }
 
 function buyPowerUp(type) {
+    if (playerFinished[currentPlayer]) return;
+
     if (type === 'mine' && playerScores[currentPlayer] >= 120) {
         const currentCell = playerPositions[currentPlayer];
         
@@ -116,7 +130,6 @@ function buyPowerUp(type) {
         playerScores[currentPlayer] -= 120;
         mines[currentCell] = true;
         
-        // Tampilkan visual ranjau di papan
         const cellEl = document.getElementById(`cell-${currentCell}`);
         if (cellEl) {
             let mineIndicator = cellEl.querySelector('.mine-indicator');
@@ -124,7 +137,7 @@ function buyPowerUp(type) {
                 mineIndicator = document.createElement('span');
                 mineIndicator.className = 'mine-indicator';
                 mineIndicator.innerText = '💣';
-                mineIndicator.style.fontSize = '14px';
+                mineIndicator.style.fontSize = '12px';
                 cellEl.appendChild(mineIndicator);
             }
         }
@@ -196,7 +209,7 @@ function handleTimeOut() {
 }
 
 function triggerQuiz() {
-    if (isRolling) return;
+    if (isRolling || playerFinished[currentPlayer]) return;
 
     if (availableQuestions.length === 0) {
         resetQuestionDeck();
@@ -306,10 +319,9 @@ function processTurn(diceValue) {
     setTimeout(() => {
         // Pengecekan Ranjau
         if (mines[nextPos]) {
-            mines[nextPos] = false; // Ranjau meledak dan hilang
-            playerSkipped[currentPlayer] = true; // Tandai pemain kehilangan 1 giliran berikutnya
+            mines[nextPos] = false;
+            playerSkipped[currentPlayer] = true;
             
-            // Hapus ikon ranjau dari papan
             const cellEl = document.getElementById(`cell-${nextPos}`);
             if (cellEl) {
                 const mineIndicator = cellEl.querySelector('.mine-indicator');
@@ -333,10 +345,11 @@ function processTurn(diceValue) {
             }
         }
 
+        // KONDISI SELESAI FINISH
         if (playerPositions[currentPlayer] === TOTAL_CELLS) {
-            alert(`🎉 PEMAIN P${currentPlayer + 1} MENANG DENGAN ${playerScores[currentPlayer]} POIN!`);
-            document.getElementById('turn-display').innerText = `P${currentPlayer + 1} WINNER!`;
-            return;
+            playerFinished[currentPlayer] = true;
+            rankings.push(currentPlayer);
+            alert(`🎉 PEMAIN P${currentPlayer + 1} BERHASIL FINISH DI URUTAN KE-${rankings.length}!`);
         }
 
         finishTurn();
@@ -344,16 +357,48 @@ function processTurn(diceValue) {
 }
 
 function finishTurn() {
-    // Tentukan pemain selanjutnya
-    currentPlayer = (currentPlayer + 1) % numPlayers;
+    const activePlayers = playerFinished.filter(f => !f).length;
 
-    // Jika pemain berikutnya kena efek ranjau (di-skip)
+    // Jika tersisa 1 pemain aktif atau semua selesai, permainan tamat
+    if (activePlayers <= 1 && numPlayers > 1) {
+        // Otomatis tandai pemain terakhir jika belum selesai
+        for (let i = 0; i < numPlayers; i++) {
+            if (!playerFinished[i]) {
+                playerFinished[i] = true;
+                rankings.push(i);
+            }
+        }
+
+        let summaryMessage = "🏁 PERMAINAN SELESAI! PERINGKAT AKHIR:\n\n";
+        rankings.forEach((pIdx, rank) => {
+            summaryMessage += `Juara ${rank + 1}: P${pIdx + 1} (${playerScores[pIdx]} PTS)\n`;
+        });
+
+        alert(summaryMessage);
+        document.getElementById('turn-display').innerText = "GAME OVER";
+        document.getElementById('roll-btn').disabled = true;
+        updateStatsDisplay();
+        return;
+    }
+
+    // Cari pemain berikutnya yang belum finish
+    let nextPlayer = (currentPlayer + 1) % numPlayers;
+    while (playerFinished[nextPlayer]) {
+        nextPlayer = (nextPlayer + 1) % numPlayers;
+    }
+    currentPlayer = nextPlayer;
+
+    // Pengecekan status skip akibat ranjau
     if (playerSkipped[currentPlayer]) {
-        playerSkipped[currentPlayer] = false; // Reset status skip
+        playerSkipped[currentPlayer] = false;
         alert(`🛑 P${currentPlayer + 1} kehilangan gilirannya karena ranjau!`);
         
-        // Pindah langsung ke pemain berikutnya lagi
-        currentPlayer = (currentPlayer + 1) % numPlayers;
+        // Pindah ke pemain aktif lainnya
+        nextPlayer = (currentPlayer + 1) % numPlayers;
+        while (playerFinished[nextPlayer]) {
+            nextPlayer = (nextPlayer + 1) % numPlayers;
+        }
+        currentPlayer = nextPlayer;
     }
 
     updateTurnDisplay();
@@ -440,7 +485,7 @@ function updatePawnPositions() {
         const pos = getCellCenter(playerPositions[i]);
         const sameCell = playerPositions.map((p, idx) => p === playerPositions[i] ? idx : null).filter(v => v !== null);
         const rank = sameCell.indexOf(i);
-        const offset = sameCell.length > 1 ? 8 : 0;
+        const offset = sameCell.length > 1 ? 6 : 0;
         const angle = (rank / sameCell.length) * 2 * Math.PI;
 
         pawn.style.left = `${pos.x + Math.cos(angle) * offset}px`;
